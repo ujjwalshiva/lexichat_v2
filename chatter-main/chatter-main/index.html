@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=1024">
+    <title>LexiChat</title>
+    <link rel="icon" type="image/png" href="chatter.png">
+    <link rel="icon" type="image/png" href="#"/>
+    <link rel="stylesheet" href="design.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
+    <script src="https://www.gstatic.com/firebasejs/9.6.8/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.8/firebase-database.js"></script>
+    
+</head>
+<body>
+    <button class="deletebtn" id="deletebtn">DELETE ALL</button>
+    
+    <div class="container">
+        <h1 id="heading"> LexiChat </h1>
+        <div class="messagearea">
+            <ul class="messages" id="messages">
+                <!-- <li class='receivermsg'>
+                    <img src="https://avatar.oxro.io/avatar.svg?name=BOT" title="BOT" class="receiverpic">
+                    Chat Securely. In Real Time.
+                    <p>14.03.2022 18:37</p>
+                </li> -->
+                <!-- <li class='sendermsg'>
+                    <img src="https://cdn.statically.io/avatar/shape=circle/BOT" title="BOT" class="senderpic">
+                    Chat Securely Friends - Reply
+                    <p>14.03.2022 18:37</p> -->
+                </li>
+            </ul>
+        </div>
+
+
+        <textarea autofocus class="chatbox" id="chatbox" placeholder="Enter your message here..."></textarea>
+        <button class="sendbtn" id="sendbtn" >
+            <i class="bi bi-send-fill" style="font-size: 20px; background: linear-gradient(93.65deg, #0D1FC2 -20.3%, #7E86CC 78.8%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-fill-color: transparent;"></i>
+        </button>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js" integrity="sha512-qTXRIMyZIFb8iQcfjXWCO8+M5Tbc38Qi5WzdPOYZHIlZpzBHG3L3by84BBBOiRGiEb7KKtAOAs5qYdUiZiQNNQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+    <script type="module">
+            // Import the functions you need from the SDKs you need
+            import { initializeApp } from "https://www.gstatic.com/firebasejs/9.10.0/firebase-app.js";
+            import { getDatabase, ref, set, child, update, onValue, onChildAdded, onChildChanged, onChildRemoved } from "https://www.gstatic.com/firebasejs/9.10.0/firebase-database.js";
+            import { getAuth, GoogleAuthProvider, signInWithPopup, getRedirectResult } from "https://www.gstatic.com/firebasejs/9.10.0/firebase-auth.js";
+            // TODO: Add SDKs for Firebase products that you want to use
+            // https://firebase.google.com/docs/web/setup#available-libraries
+
+            // Your web app's Firebase configuration
+            // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+            const firebaseConfig = {
+                    apiKey: "AIzaSyCm9_XcCzXfAMtoRSsbFCma5APViAx3fN4",
+                    authDomain: "lexichat-8d5ba.firebaseapp.com",
+                    projectId: "lexichat-8d5ba",
+                    storageBucket: "lexichat-8d5ba.appspot.com",
+                    messagingSenderId: "406328265469",
+                    appId: "1:406328265469:web:324c4f4b81c7e43de14c94",
+                    measurementId: "G-41HSZ4535N",
+                    databaseURL: "https://lexichat-8d5ba-default-rtdb.asia-southeast1.firebasedatabase.app"
+                };
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    function titleCase (str) {
+      if ((str===null) || (str===''))
+           return false;
+      else
+       str = str.toString();
+
+     return str.replace(/\w\S*/g, function(txt){return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();});
+    }
+
+    fetch('https://api.countapi.xyz/hit/chatter_session_id/sessionid')
+            .then(result => result.json())
+            .then((output) => {
+                console.log(output.value);
+                let val = prompt("Enter common Session ID to chat with your friends: ");
+                if (val == "") {
+                    sessionStorage.setItem("sessionId", output.value);
+                    document.getElementById("heading").innerHTML = `LexiChat - Session ${sessionStorage.sessionId}`;
+                }
+                else {
+                    sessionStorage.setItem("sessionId", val);
+                    document.getElementById("heading").innerHTML = `LexiChat - Session ${sessionStorage.sessionId}`;
+                }
+            }).catch(err => console.error(err));
+    
+        set(ref(db, "messages/" + (eval(sessionStorage.sessionId))+ '/Entry Message'), {
+                "sender": "Bot",
+                "message": "Chat Securely, In real time!",
+                "date": "25-09-2022 0:00:00 AM"
+            });
+        
+
+    alert(` Hi ${localStorage.getItem("name")}!`);
+    let myname = localStorage.getItem("name");
+
+    document.getElementById("sendbtn").addEventListener("click", sender, false);
+    document.getElementById("deletebtn").addEventListener("click", deleteall, false);
+
+    let html = "";
+
+    let today = moment().utcOffset("+05:30").format("DD-MM-YYYY");
+
+    onChildAdded(ref(db, `messages/${parseInt(sessionStorage.sessionId)}/`), (snapshot) => {
+        let html = "";
+        console.log(snapshot.val());
+        console.log(sessionStorage.sessionId);
+        if(snapshot.val().sender == myname) {
+            html+= `<li class='sendermsg'><img src=\"https://avatar.oxro.io/avatar.svg?name=${myname}\" title=\"${myname}\" class=\"senderpic\">${snapshot.val().message}<p>${snapshot.val().date}</p></li>`;
+            //console.log(html);
+            let div = document.getElementById('messages');
+            div.innerHTML += html;
+            div.scrollIntoView({behavior: "smooth", block: "end", inline: "end"});
+        }
+        else{
+            html+= `<li class='receivermsg'><img src=\"https://avatar.oxro.io/avatar.svg?name=${snapshot.val().sender}\" title=\"${snapshot.val().sender}\" class=\"receiverpic\">${snapshot.val().message}<p>${snapshot.val().date}</p></li>`;
+            //console.log(html);
+            let div = document.getElementById('messages');
+            div.innerHTML += html;
+            div.scrollIntoView({behavior: "smooth", block: "end", inline: "end"});
+        }
+
+    });
+
+    onChildAdded();
+
+    function deleteall() {
+        let div = document.getElementById('messages');
+        let defaultmsg = "<li class\=\'receivermsg\'><img src=\"https\:\/\/cdn.statically.io\/avatar\/shape=circle\/BOT\" title=\"BOT\" class\=\"receiverpic\">Chat Securely. In Real Time<p>14\.03\.2022 18\:37</p></li>"
+        div.innerHTML = defaultmsg;
+    };
+
+    function sender() {
+        let text = document.querySelector('#chatbox').value;
+        console.log(text);
+        if(text!="") {
+            if (myname==""){
+                myname = "Guest User";
+            }
+            let date = moment().utcOffset("+05:30").format("DD-MM-YYYY h:mm:ss a");
+            set(ref(db, `messages/${eval(sessionStorage.sessionId)}/${date}/`), {
+                "sender" : myname,
+                "message" : text,
+                "date" : date
+        });
+        document.querySelector('#chatbox').value = "";
+    }};
+
+    let chatbox = document.getElementById('chatbox');
+    chatbox.addEventListener("keydown", function(e) {
+        if (e.keyCode === 13) {  
+            e.preventDefault();
+            sender();
+        }
+    });
+    </script>
+</body>
+</html>
